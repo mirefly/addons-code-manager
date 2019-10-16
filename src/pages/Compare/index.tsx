@@ -50,6 +50,7 @@ type PropsFromState = {
   compareInfo: CompareInfo | null | undefined;
   entryStatusMap: EntryStatusMap | undefined;
   path: string | undefined;
+  selectedPath: string | undefined;
   version: Version | undefined | null;
   versionFile: VersionFile | undefined | null;
   versionFileIsLoading: boolean;
@@ -87,6 +88,7 @@ export class CompareBase extends React.Component<Props> {
       history,
       match,
       path,
+      selectedPath,
       version,
       versionFile,
       versionFileIsLoading,
@@ -130,12 +132,17 @@ export class CompareBase extends React.Component<Props> {
       dispatch(versionsActions.setCurrentVersionId({ versionId: version.id }));
     }
 
-    if (version && !versionFileIsLoading && versionFile === undefined) {
+    if (
+      version &&
+      selectedPath &&
+      !versionFileIsLoading &&
+      versionFile === undefined
+    ) {
       dispatch(
         _fetchVersionFile({
           addonId: parseInt(addonId, 10),
           versionId: version.id,
-          path: version.selectedPath,
+          path: selectedPath,
         }),
       );
     }
@@ -181,6 +188,7 @@ export class CompareBase extends React.Component<Props> {
       compareInfo,
       match,
       path,
+      selectedPath,
       version,
       versionFile,
     } = this.props;
@@ -207,17 +215,19 @@ export class CompareBase extends React.Component<Props> {
           file={versionFile}
           getCodeLineAnchor={createCodeLineAnchorGetter({ compareInfo })}
           onSelectFile={this.viewVersionFile}
+          selectedPath={selectedPath}
           version={version}
         >
           <div className={styles.diffShell}>
             <VersionChooser addonId={addonId} />
-            {version && compareInfo ? (
+            {version && compareInfo && selectedPath ? (
               <div key={`${version.id}:${path}`} className={styles.diffContent}>
                 {/* The key in this ^ resets scrollbars between files */}
                 <DiffView
                   diff={compareInfo.diff}
                   mimeType={compareInfo.mimeType}
                   version={version}
+                  selectedPath={selectedPath}
                 />
               </div>
             ) : (
@@ -236,6 +246,7 @@ export const mapStateToProps = (
 ): PropsFromState => {
   const { history, match } = ownProps;
   const { versions } = state;
+  const { selectedPath } = versions;
   const addonId = parseInt(match.params.addonId, 10);
   const baseVersionId = parseInt(match.params.baseVersionId, 10);
   const headVersionId = parseInt(match.params.headVersionId, 10);
@@ -263,12 +274,8 @@ export const mapStateToProps = (
     : undefined;
 
   let versionFile;
-  if (version) {
-    versionFile = getVersionFile(
-      state.versions,
-      headVersionId,
-      version.selectedPath,
-    );
+  if (selectedPath) {
+    versionFile = getVersionFile(state.versions, headVersionId, selectedPath);
   }
 
   return {
@@ -277,11 +284,13 @@ export const mapStateToProps = (
     currentVersionId,
     entryStatusMap,
     path,
+    selectedPath,
     version,
     versionFile,
-    versionFileIsLoading: version
-      ? isFileLoading(state.versions, version.id, version.selectedPath)
-      : false,
+    versionFileIsLoading:
+      version && selectedPath
+        ? isFileLoading(state.versions, version.id, selectedPath)
+        : false,
   };
 };
 
