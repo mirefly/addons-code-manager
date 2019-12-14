@@ -31,9 +31,14 @@ import LinterProvider, { LinterProviderInfo } from '../LinterProvider';
 import GlobalLinterMessages from '../GlobalLinterMessages';
 import SlowPageAlert from '../SlowPageAlert';
 
-const cache = new CellMeasurerCache({
+let cache = new CellMeasurerCache({
   fixedWidth: true,
+  defaultHeight: 20,
 });
+
+let list: any = undefined;
+
+let mostRecentWidth: number | undefined;
 
 // This is how many lines of code it takes to slow down the UI.
 const SLOW_LOADING_LINE_COUNT = 1000;
@@ -104,6 +109,8 @@ export class CodeViewBase extends React.Component<Props> {
     enableCommenting: process.env.REACT_APP_ENABLE_COMMENTING === 'true',
   };
 
+  list: any = undefined;
+
   renderWithLinterInfo = ({ selectedMessageMap }: LinterProviderInfo) => {
     const {
       _scrollToSelectedLine,
@@ -122,9 +129,13 @@ export class CodeViewBase extends React.Component<Props> {
 
     const rowRenderer = ({
       index: i,
+      key,
+      parent,
       style,
     }: {
       index: number;
+      key: any;
+      parent: any;
       style: any;
     }) => {
       const code = codeLines[i];
@@ -140,67 +151,75 @@ export class CodeViewBase extends React.Component<Props> {
       }
 
       return (
-        <div key={`fragment-${line}`} style={style}>
-          <Commentable
-            as="tr"
-            id={id}
-            className={className}
-            line={line}
-            fileName={version.selectedPath}
-            shellRef={shellRef}
-            versionId={version.id}
-          >
-            {(addCommentButton) => (
-              <>
-                <td className={styles.lineNumber}>
-                  <Link
-                    className={styles.lineNumberLink}
-                    to={{
-                      ...location,
-                      hash: getCodeLineAnchor(line),
-                    }}
-                  >{`${line}`}</Link>
-                  {enableCommenting && addCommentButton}
-                </td>
-
-                <td className={styles.code}>
-                  {renderCode({
-                    code,
-                    language,
-                    shouldHighlight: !codeWasTrimmed,
-                  })}
-                </td>
-              </>
-            )}
-          </Commentable>
-          {selectedMessageMap && selectedMessageMap.byLine[line] && (
-            <tr>
-              <td
-                id={`line-${line}-messages`}
-                className={styles.linterMessages}
-                colSpan={2}
-              >
-                {selectedMessageMap.byLine[line].map((msg) => {
-                  return <LinterMessage inline key={msg.uid} message={msg} />;
-                })}
-              </td>
-            </tr>
-          )}
-          {enableCommenting && (
-            <CommentList
-              addonId={version.addon.id}
-              fileName={version.selectedPath}
+        <CellMeasurer
+          cache={cache}
+          columnIndex={0}
+          parent={parent}
+          rowIndex={i}
+          key={key}
+        >
+          <div key={`fragment-${line}`} style={style}>
+            <Commentable
+              as="tr"
+              id={id}
+              className={className}
               line={line}
+              fileName={version.selectedPath}
+              shellRef={shellRef}
               versionId={version.id}
             >
-              {(commentList) => (
-                <tr>
-                  <td colSpan={2}>{commentList}</td>
-                </tr>
+              {(addCommentButton) => (
+                <>
+                  <td className={styles.lineNumber}>
+                    <Link
+                      className={styles.lineNumberLink}
+                      to={{
+                        ...location,
+                        hash: getCodeLineAnchor(line),
+                      }}
+                    >{`${line}`}</Link>
+                    {enableCommenting && addCommentButton}
+                  </td>
+
+                  <td className={styles.code}>
+                    {renderCode({
+                      code,
+                      language,
+                      shouldHighlight: !codeWasTrimmed,
+                    })}
+                  </td>
+                </>
               )}
-            </CommentList>
-          )}
-        </div>
+            </Commentable>
+            {selectedMessageMap && selectedMessageMap.byLine[line] && (
+              <tr>
+                <td
+                  id={`line-${line}-messages`}
+                  className={styles.linterMessages}
+                  colSpan={2}
+                >
+                  {selectedMessageMap.byLine[line].map((msg) => {
+                    return <LinterMessage inline key={msg.uid} message={msg} />;
+                  })}
+                </td>
+              </tr>
+            )}
+            {enableCommenting && (
+              <CommentList
+                addonId={version.addon.id}
+                fileName={version.selectedPath}
+                line={line}
+                versionId={version.id}
+              >
+                {(commentList) => (
+                  <tr>
+                    <td colSpan={2}>{commentList}</td>
+                  </tr>
+                )}
+              </CommentList>
+            )}
+          </div>
+        </CellMeasurer>
       );
     };
 
@@ -252,15 +271,32 @@ export class CodeViewBase extends React.Component<Props> {
           <div className={styles.CodeView}>
             <table className={styles.table}>
               <tbody className={styles.tableBody}>
-                <AutoSizer style={{ height: '300px' }}>
+                <AutoSizer style={{ height: '600px' }}>
                   {(autoSizerParams) => {
+                    if (
+                      mostRecentWidth &&
+                      mostRecentWidth !== autoSizerParams.width
+                    ) {
+                      cache.clearAll();
+                      if (list) {
+                        list.recomputeRowHeights();
+                      }
+                    }
+
+                    mostRecentWidth = autoSizerParams.width;
+
                     return (
                       <List
+                        deferredMeasurementCache={cache}
                         height={autoSizerParams.height}
+                        overscanRowCount={100}
                         rowCount={codeLines.length}
                         rowHeight={cache.rowHeight}
                         width={autoSizerParams.width}
                         rowRenderer={rowRenderer}
+                        ref={(ref) => {
+                          list = ref;
+                        }}
                       />
                     );
                   }}
