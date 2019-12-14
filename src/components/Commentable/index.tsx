@@ -14,6 +14,7 @@ export type PublicProps = {
   className?: string;
   id?: string;
   shellRef?: (element: HTMLElement | null) => void;
+  style?: any;
 } & AddCommentProps;
 
 // This represents something that can be commented on, such as a line of code.
@@ -26,6 +27,7 @@ const CommentableBase = ({
   id,
   line,
   shellRef,
+  style,
   versionId,
 }: PublicProps) => {
   return (
@@ -33,6 +35,7 @@ const CommentableBase = ({
       className={makeClassName(styles.commentable, className)}
       id={id}
       ref={shellRef}
+      style={style}
     >
       {children(
         <AddComment
