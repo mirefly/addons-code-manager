@@ -3,6 +3,7 @@ import { withRouter, Link, RouteComponentProps } from 'react-router-dom';
 import makeClassName from 'classnames';
 
 import styles from './styles.module.scss';
+import CodeWindow, { ListContext, Measurer } from '../CodeWindow';
 import Commentable from '../Commentable';
 import CommentList from '../CommentList';
 import FadableContent from '../FadableContent';
@@ -25,6 +26,7 @@ import { Version } from '../../reducers/versions';
 import LinterProvider, { LinterProviderInfo } from '../LinterProvider';
 import GlobalLinterMessages from '../GlobalLinterMessages';
 import SlowPageAlert from '../SlowPageAlert';
+import { rootAttributeParams } from '../../../stories/utils';
 
 // This is how many lines of code it takes to slow down the UI.
 const SLOW_LOADING_LINE_COUNT = 1000;
@@ -89,6 +91,19 @@ export type DefaultProps = {
 
 type Props = PublicProps & DefaultProps & RouteComponentProps;
 
+const CodeViewTable: React.FC<{ style: React.CSSProperties }> = ({
+  children,
+  style,
+}) => {
+  return (
+    <div style={style} className={styles.CodeView}>
+      <table className={styles.table}>
+        <tbody className={styles.tableBody}>{children}</tbody>
+      </table>
+    </div>
+  );
+};
+
 export class CodeViewBase extends React.Component<Props> {
   static defaultProps: DefaultProps = {
     _codeCanBeHighlighted: codeCanBeHighlighted,
@@ -141,6 +156,134 @@ export class CodeViewBase extends React.Component<Props> {
     const shouldHighlight =
       !codeWasTrimmed && _codeCanBeHighlighted({ code: codeLines });
 
+    const rows = codeLines
+      .map((code, i) => {
+        const line = i + 1;
+        const id = getCodeLineAnchorID(line);
+
+        let className = styles.line;
+        let shellRef: any;
+
+        if (isLineSelected(id, location)) {
+          className = makeClassName(className, styles.selectedLine);
+          shellRef = _scrollToSelectedLine;
+        }
+
+        const tableRows = [
+          ({
+            style,
+            ref,
+          }: {
+            style: React.CSSProperties;
+            ref: React.RefObject<HTMLDivElement>;
+          }) => (
+            <Commentable
+              as="tr"
+              id={id}
+              className={className}
+              line={line}
+              fileName={version.selectedPath}
+              shellRef={shellRef}
+              style={{ ...style, alignItems: 'center' }}
+              versionId={version.id}
+            >
+              {(addCommentButton) => (
+                <>
+                  <td className={styles.lineNumber}>
+                    <Link
+                      className={styles.lineNumberLink}
+                      to={{
+                        ...location,
+                        hash: getCodeLineAnchor(line),
+                      }}
+                    >{`${line}`}</Link>
+                    {enableCommenting && addCommentButton}
+                  </td>
+
+                  <td className={styles.code}>
+                    {renderCode({
+                      code,
+                      language,
+                      shouldHighlight,
+                    })}
+                  </td>
+                </>
+              )}
+            </Commentable>
+          ),
+        ];
+
+        if (selectedMessageMap && selectedMessageMap.byLine[line]) {
+          tableRows.push(({ ref, style }) => (
+            <tr style={style}>
+              <td
+                id={`line-${line}-messages`}
+                className={styles.linterMessages}
+                colSpan={2}
+              >
+                <div ref={ref}>
+                  {selectedMessageMap.byLine[line].map((msg) => {
+                    return <LinterMessage inline key={msg.uid} message={msg} />;
+                  })}
+                  <div style={{ height: '0.1px' }} />
+                  {
+                    // compensate the offset due to the triangle arrow on top
+                  }
+                </div>
+              </td>
+            </tr>
+          ));
+        }
+
+        if (enableCommenting) {
+          tableRows.push(({ ref, style }) => (
+            <CommentList
+              addonId={version.addon.id}
+              fileName={version.selectedPath}
+              line={line}
+              versionId={version.id}
+            >
+              {(commentList) => (
+                <tr style={style}>
+                  <td colSpan={2}>
+                    <div ref={ref}>{commentList}</div>
+                  </td>
+                </tr>
+              )}
+            </CommentList>
+          ));
+        }
+
+        return tableRows;
+      })
+      .flat();
+
+    const rowRenderer = ({
+      index,
+      style,
+      data,
+    }: {
+      index: number;
+      style: React.CSSProperties;
+      data: any;
+    }) => {
+      return (
+        <Measurer index={index} style={style}>
+          {({ style, ref }) =>
+            rows[index]({
+              style: {
+                ...style,
+                display: 'flex',
+                overflow: 'hidden',
+                width: 'auto',
+              },
+              ref,
+            })
+          }
+        </Measurer>
+      );
+    };
+
     return (
       <>
         <GlobalLinterMessages
@@ -162,94 +305,11 @@ export class CodeViewBase extends React.Component<Props> {
         {slowAlert}
 
         <FadableContent fade={codeWasTrimmed}>
-          <div className={styles.CodeView}>
-            <table className={styles.table}>
-              <tbody className={styles.tableBody}>
-                {codeLines.map((code, i) => {
-                  const line = i + 1;
-                  const id = getCodeLineAnchorID(line);
-
-                  let className = styles.line;
-                  let shellRef;
-
-                  if (isLineSelected(id, location)) {
-                    className = makeClassName(className, styles.selectedLine);
-                    shellRef = _scrollToSelectedLine;
-                  }
-
-                  return (
-                    <React.Fragment key={`fragment-${line}`}>
-                      <Commentable
-                        as="tr"
-                        id={id}
-                        className={className}
-                        line={line}
-                        fileName={version.selectedPath}
-                        shellRef={shellRef}
-                        versionId={version.id}
-                      >
-                        {(addCommentButton) => (
-                          <>
-                            <td className={styles.lineNumber}>
-                              <Link
-                                className={styles.lineNumberLink}
-                                to={{
-                                  ...location,
-                                  hash: getCodeLineAnchor(line),
-                                }}
-                              >{`${line}`}</Link>
-                              {enableCommenting && addCommentButton}
-                            </td>
-
-                            <td className={styles.code}>
-                              {renderCode({
-                                code,
-                                language,
-                                shouldHighlight,
-                              })}
-                            </td>
-                          </>
-                        )}
-                      </Commentable>
-                      {selectedMessageMap && selectedMessageMap.byLine[line] && (
-                        <tr>
-                          <td
-                            id={`line-${line}-messages`}
-                            className={styles.linterMessages}
-                            colSpan={2}
-                          >
-                            {selectedMessageMap.byLine[line].map((msg) => {
-                              return (
-                                <LinterMessage
-                                  inline
-                                  key={msg.uid}
-                                  message={msg}
-                                />
-                              );
-                            })}
-                          </td>
-                        </tr>
-                      )}
-                      {enableCommenting && (
-                        <CommentList
-                          addonId={version.addon.id}
-                          fileName={version.selectedPath}
-                          line={line}
-                          versionId={version.id}
-                        >
-                          {(commentList) => (
-                            <tr>
-                              <td colSpan={2}>{commentList}</td>
-                            </tr>
-                          )}
-                        </CommentList>
-                      )}
-                    </React.Fragment>
-                  );
-                })}
-              </tbody>
-            </table>
-          </div>
+          <CodeWindow
+            innerElementType={CodeViewTable}
+            rowCount={rows.length}
+            rowRenderer={rowRenderer}
+          />
         </FadableContent>
         {/* Only show a slow alert at the bottom if the code was trimmed. */}
         {codeWasTrimmed && slowAlert}
