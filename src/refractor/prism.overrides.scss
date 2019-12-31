@@ -1,19 +1,48 @@
 @import '../scss/variables';
 
-code[class*='language-'],
-pre[class*='language-'] {
+td[class*='language-'] {
+  color: #657b83; /* base00 */
+  font-family: $code-font-family;
+  font-size: $code-font-size;
+  text-align: left;
+  white-space: pre-wrap;
+  word-spacing: normal;
+  word-break: break-all;
+  word-wrap: break-word;
+
   line-height: $code-line-height;
+
+  -moz-tab-size: 4;
+  -o-tab-size: 4;
+  tab-size: 4;
+
+  -webkit-hyphens: none;
+  -moz-hyphens: none;
+  -ms-hyphens: none;
+  hyphens: none;
 }
 
-pre[class='language-text'],
-code[class='language-text'] {
+td[class*='language-']::-moz-selection {
+  background: #073642; /* base02 */
+}
+
+td[class*='language-']::selection {
+  background: #073642; /* base02 */
+}
+
+/* Code blocks */
+td[class*='language-'] {
+  padding: 0;
+  margin: 0.5em 0;
+  overflow: auto;
+  border-radius: 0.3em;
+}
+
+td[class='language-text'] {
   color: #073642; /* base02 */
 }
 
-pre[class='language-text']::selection,
-pre[class='language-text'] ::selection,
-code[class='language-text']::selection,
-code[class='language-text'] ::selection {
+td[class='language-text'] ::selection {
   color: #eee8d5; /* base2 */
   background: #073642; /* base02 */
 }

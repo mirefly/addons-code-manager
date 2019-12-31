@@ -1,12 +1,12 @@
 @import '../../scss/variables';
 
 .table {
-  display: block;
+  display: table;
+  table-layout: fixed;
   width: 100%;
 }
 
 .tableBody {
-  display: block;
   overflow: auto;
   width: 100%;
 }
@@ -38,28 +38,10 @@
   align-items: center;
   display: flex;
   justify-content: flex-end;
-}
 
-.code {
-  width: 100%;
-}
-
-.lineNumber,
-.highlightedCode {
   font-family: $code-font-family;
   font-size: $code-font-size;
   line-height: $code-line-height;
-}
-
-.highlightedCode {
-  margin: 0;
-}
-
-code.innerHighlightedCode {
-  white-space: pre-wrap;
-  word-break: break-all;
-  // This is a fallback for older browsers.
-  word-wrap: break-word;
 }
 
 .linterMessages {

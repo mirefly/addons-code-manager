@@ -181,7 +181,6 @@ describe(__filename, () => {
 
     expect(provider.find(`.${styles.CodeView}`)).toHaveLength(1);
     expect(line.find(`.${styles.lineNumber}`)).toHaveLength(1);
-    expect(line.find(`.${styles.code}`)).toHaveLength(1);
     expect(line.find(`.${styles.highlightedCode}`)).toHaveLength(1);
     expect(line.find('.language-text')).toHaveLength(1);
   });
@@ -196,7 +195,6 @@ describe(__filename, () => {
     const line = renderContent();
 
     expect(line.find(`.${styles.lineNumber}`)).toHaveLength(1);
-    expect(line.find(`.${styles.code}`)).toHaveLength(1);
     expect(line.find(`.${styles.highlightedCode}`)).toHaveLength(1);
 
     expect(line.find('.language-json')).toHaveLength(1);
@@ -254,7 +252,6 @@ describe(__filename, () => {
 
       const line = renderContent(shell.at(index));
       expect(line.find(`.${styles.lineNumber}`)).toHaveLength(1);
-      expect(line.find(`.${styles.code}`)).toHaveLength(1);
     },
   );
 

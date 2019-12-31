@@ -48,16 +48,11 @@ const renderCode = ({
   }
 
   return (
-    <pre className={styles.highlightedCode}>
-      <code
-        className={makeClassName(
-          styles.innerHighlightedCode,
-          `language-${language}`,
-        )}
-      >
-        {value || code}
-      </code>
-    </pre>
+    <td
+      className={makeClassName(styles.highlightedCode, `language-${language}`)}
+    >
+      {value || code}
+    </td>
   );
 };
 
@@ -164,6 +159,10 @@ export class CodeViewBase extends React.Component<Props> {
         <FadableContent fade={codeWasTrimmed}>
           <div className={styles.CodeView}>
             <table className={styles.table}>
+              <colgroup>
+                <col style={{ width: '7ch' }} />
+                <col />
+              </colgroup>
               <tbody className={styles.tableBody}>
                 {codeLines.map((code, i) => {
                   const line = i + 1;
@@ -201,13 +200,11 @@ export class CodeViewBase extends React.Component<Props> {
                               {enableCommenting && addCommentButton}
                             </td>
 
-                            <td className={styles.code}>
-                              {renderCode({
-                                code,
-                                language,
-                                shouldHighlight,
-                              })}
-                            </td>
+                            {renderCode({
+                              code,
+                              language,
+                              shouldHighlight,
+                            })}
                           </>
                         )}
                       </Commentable>
