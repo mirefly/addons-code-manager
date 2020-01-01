@@ -74,6 +74,8 @@
   "devDependencies": {
     "@emotion/core": "^10.0.7",
     "@emotion/styled": "^10.0.7",
+    "@storybook/addon-storyshots": "^5.2.8",
+    "@storybook/addon-storyshots-puppeteer": "^5.2.8",
     "@storybook/react": "^5.0.0",
     "@storybook/storybook-deployer": "^2.8.1",
     "@types/dedent": "^0.7.0",
@@ -98,6 +100,8 @@
     "prettier": "1.19.1",
     "pretty-quick": "^2.0.0",
     "react-storybook-addon-chapters": "^3.1.1",
+    "react-test-renderer": "^16.12.0",
+    "require-context.macro": "^1.2.2",
     "stmux": "^1.6.1",
     "storybook-addon-root-attribute": "^0.2.0",
     "supertest": "^4.0.0",

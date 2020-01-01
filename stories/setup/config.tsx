@@ -10,6 +10,7 @@ import {
 // @ts-ignore
 import chaptersAddon, { setDefaults } from 'react-storybook-addon-chapters';
 import { withRootAttribute } from 'storybook-addon-root-attribute';
+import requireContext from 'require-context.macro';
 
 import configureApplication from '../../src/configureApplication';
 import { rootAttributeParams } from '../utils';
@@ -22,7 +23,7 @@ import './styles.scss';
 configureApplication();
 
 // Automatically import all files ending in *.stories.tsx
-const req = require.context('../', true, /.stories.tsx$/);
+const req = requireContext('../', true, /.stories.tsx$/);
 
 addDecorator(withRootAttribute);
 
